@@ -37,8 +37,7 @@ def add_team():
     phone = form.get('phone')
     city = form.get('city')
     state = form.get('state')
-    active = '1'
-    cursor.execute('INSERT INTO users (first_name, last_name, email, phone, city, state, active) VALUES (%s, %s, %s, %s, %s, %s, %s)', (first_name, last_name, email, phone, city, state, active))
+    cursor.execute('INSERT INTO users (first_name, last_name, email, phone, city, state, active) VALUES (%s, %s, %s, %s, %s, %s)', (first_name, last_name, email, phone, city, state))
     conn.commit()
     return jsonify('User added'), 200
 
@@ -107,12 +106,9 @@ def update_user(user_id):
         if form.get('state').isnumeric():
             return jsonify('state must be a two character string')
     if form.get('active'):
-        if str(form.get('active')).lower() != "true":
-            print()
-        elif str(form.get('active')).lower() != "false":
-            print()
-        else:
-            print(str(form.get('active')))
+        if str(form.get('active')).lower() == "true" or str(form.get('active')).lower() == "false":
+            pass
+        else:    
             return jsonify('active must be a boolean true or false'), 400 
 
     if form.get('first_name'):
