@@ -10,13 +10,14 @@ def create_all():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             user_id SERIAL UNIQUE PRIMARY KEY,
+            org_id SERIAL UNIQUE,
             first_name VARCHAR NOT NULL,
             last_name VARCHAR,
             email VARCHAR UNIQUE NOT NULL,
             phone VARCHAR,
             city VARCHAR,
             state VARCHAR (4),
-            active SMALLINT DEFAULT 1
+            active BOOLEAN DEFAULT true
         );
     """)
     conn.commit()
@@ -51,39 +52,41 @@ def get_all():
         for u in results:
             user_record = {
                 'user_id':u[0],
-                'first_name':u[1],
-                'last_name':u[2],
-                'email':u[3],
-                'phone':u[4],
-                'city':u[5],
-                'state': u[6],
-                'active':u[7]
+                'org_id':u[1],
+                'first_name':u[2],
+                'last_name':u[3],
+                'email':u[4],
+                'phone':u[5],
+                'city':u[6],
+                'state': u[7],
+                'active':u[8]
             }
             users.append(user_record)
         return jsonify(users), 200
     
     return 'No users found', 404
 
-@app.route('/user/<user_id>')
+@app.route('/user/get/<user_id>')
 def get_team_by_id(user_id):
     results = cursor.execute("SELECT * FROM users WHERE user_id=%s", (user_id))
     results = cursor.fetchone()
     if results:                      
         result_dictionary = {
             'user_id':results[0],
-            'first_name': results[1],
-            'last_name': results[2],
-            'email': results[3],
-            'phone': results[4],
-            'city': results[5],
-            'state': results[6],
-            'active': results[7]
+            'org_id':results[1],
+            'first_name': results[2],
+            'last_name': results[3],
+            'email': results[4],
+            'phone': results[5],
+            'city': results[6],
+            'state': results[7],
+            'active': results[8]
         }  
         return jsonify(result_dictionary), 200
     else:
         return jsonify(f"User {user_id} Not Found")
 
-@app.route('/update/<user_id>', methods=['PUT', 'PATCH', 'POST'])
+@app.route('/user/update/<user_id>', methods=['PUT', 'PATCH', 'POST'])
 def update_user(user_id):
     form = request.form
     if form.get('first_name'):
@@ -104,11 +107,16 @@ def update_user(user_id):
         if form.get('state').isnumeric():
             return jsonify('state must be a two character string')
     if form.get('active'):
-        if 0 > int(form.get('active')) > 1:
-            return jsonify('active must be 0 for inactive or 1 for active') 
+        if str(form.get('active')).lower() != "true":
+            print()
+        elif str(form.get('active')).lower() != "false":
+            print()
+        else:
+            print(str(form.get('active')))
+            return jsonify('active must be a boolean true or false'), 400 
 
     if form.get('first_name'):
-        cursor.execute("UPDATE users SET forst_name=%s WHERE user_id=%s", (form["first_name"], user_id))
+        cursor.execute("UPDATE users SET first_name=%s WHERE user_id=%s", (form["first_name"], user_id))
         conn.commit()
     if form.get('last_name'):
         cursor.execute("UPDATE users SET last_name=%s WHERE user_id=%s", (form["last_name"], user_id))
@@ -130,7 +138,7 @@ def update_user(user_id):
         conn.commit()   
     return jsonify('All provided fields were updated.')
 
-@app.route('/delete/<user_id>', methods=['DELETE'])
+@app.route('/user/delete/<user_id>', methods=['DELETE'])
 def delete_team(user_id):
     cursor.execute("SELECT * FROM users WHERE user_id=%s", (user_id))
     results = cursor.fetchone()
@@ -143,7 +151,7 @@ def delete_team(user_id):
 
     return (f" Team {user_id} Deleted"), 200
 
-@app.route('/deactivate/<user_id>', methods=['POST', 'PATCH', 'PUT'])
+@app.route('/user/deactivate/<user_id>', methods=['POST', 'PATCH', 'PUT'])
 def deactivate_team_by_id(user_id):
     cursor.execute("SELECT * FROM users WHERE user_id=%s", (user_id))
     results = cursor.fetchone()
@@ -151,12 +159,12 @@ def deactivate_team_by_id(user_id):
     if not results:
         return (f"Team {user_id} not found."), 404
     
-    cursor.execute("UPDATE users SET active=0 WHERE user_id=%s;", (user_id))
+    cursor.execute("UPDATE users SET active=false WHERE user_id=%s;", (user_id))
     conn.commit()
 
     return(f"Team {user_id} Deactivated"), 200
 
-@app.route('/activate/<user_id>', methods=['POST', 'PATCH', 'PUT'])
+@app.route('/user/activate/<user_id>', methods=['POST', 'PATCH', 'PUT'])
 def activate_team_by_id(user_id):
     cursor.execute("SELECT * FROM users WHERE user_id=%s", (user_id))
     results = cursor.fetchone()
@@ -164,7 +172,7 @@ def activate_team_by_id(user_id):
     if not results:
         return (f"Team {user_id} not found."), 404
     
-    cursor.execute("UPDATE users SET active=1 WHERE user_id=%s;", (user_id))
+    cursor.execute("UPDATE users SET active=true WHERE user_id=%s;", (user_id))
     conn.commit()
 
     return(f"Team {user_id} Activated"), 200
